@@ -1,5 +1,5 @@
 #!/bin/bash
 
-git rev-list HEAD ^origin/HEAD \
+git rev-list --right-only --cherry-pick --no-merges origin/HEAD...HEAD \
   | fzf --preview 'git show {} --color=always' --height=10 \
   | xargs git cherry-pick-onto "$@" --exec-after 'git push --set-upstream origin "$(git rev-parse --abbrev-ref HEAD)" && gh pr create --web'
