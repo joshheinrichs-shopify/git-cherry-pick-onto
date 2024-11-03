@@ -45,18 +45,27 @@ if [[ -z "${BRANCH}" ]]; then
   exit 1
 fi
 
-worktree="$(mktemp -d)"
+function log_cmd() {
+  [[ -t 2 ]] && >&2 printf '\033[1m'
+  >&2 printf '$ '
+  >&2 printf '%q ' "$@"
+  [[ -t 2 ]] && >&2 printf '\033[0m'
+  >&2 printf '\n'
+  "$@"
+}
+
+worktree="$(log_cmd mktemp -d)"
 if [[ "${FORCE_BRANCH}" -eq 1 ]]; then
   branch_flag="-B"
 else
   branch_flag="-b"
 fi
 
-git worktree add "${branch_flag}" "${BRANCH}" --no-checkout "${worktree}" "${ONTO}"
-pushd "${worktree}"
+log_cmd git worktree add "${branch_flag}" "${BRANCH}" --no-checkout "${worktree}" "${ONTO}"
+log_cmd pushd "${worktree}"
 
-git sparse-checkout init --no-cone
-git checkout
+log_cmd git sparse-checkout init --no-cone
+log_cmd git checkout
 
 if [[ "${#COMMITS[@]}" -eq 0 ]]; then
   if [ -t 0 ]; then
@@ -64,15 +73,15 @@ if [[ "${#COMMITS[@]}" -eq 0 ]]; then
   fi
 
   while IFS= read -r commit; do
-    git cherry-pick "${commit}"
+    log_cmd git cherry-pick "${commit}"
   done
 else
-  git cherry-pick "${COMMITS[@]}"
+  log_cmd git cherry-pick "${COMMITS[@]}"
 fi
 
 if [[ -n "${EXEC_AFTER}" ]]; then
-  sh -c "${EXEC_AFTER}"
+  log_cmd sh -c "${EXEC_AFTER}"
 fi
 
-popd
-git worktree remove "${worktree}"
+log_cmd popd
+log_cmd git worktree remove "${worktree}"
