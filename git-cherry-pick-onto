@@ -4,7 +4,7 @@ COMMITS=()
 BRANCH=
 FORCE_BRANCH=0
 EXEC_AFTER=
-ONTO=FETCH_HEAD
+ONTO=origin/HEAD
 
 while [[ $# -gt 0 ]]; do
   case $1 in
