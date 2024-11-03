@@ -15,4 +15,6 @@ It's not the end of the world, but it's a bit tedious, and if you're working in 
 
 For example, [`examples/git-cherry-pr`](examples/git-cherry-pr) opens a [`fzf`](https://github.com/junegunn/fzf) selector with commits that are in your branch but not in `origin/main`, cherry-picks the selected commits onto a new branch, and then opens a pull request in GitHub, reducing the process above from eight commands to two (`git commit -p && git cherry-pr -b fix`), while also running significantly faster.
 
+![](demo/demo.gif)
+
 Currently `git-cherry-pick-onto` is in a proof-of-concept state and could use improvements to its logging and error handling (e.g. handling merge conflicts), but it works well enough for me!
