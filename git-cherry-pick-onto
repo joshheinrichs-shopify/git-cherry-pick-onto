@@ -1,0 +1,78 @@
+#!/bin/bash
+
+COMMITS=()
+BRANCH=
+FORCE_BRANCH=0
+EXEC_AFTER=
+ONTO=FETCH_HEAD
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -b|--branch)
+      BRANCH="$2"
+      shift
+      shift
+      ;;
+    -B)
+      BRANCH="$2"
+      FORCE_BRANCH=1
+      shift
+      shift
+      ;;
+    -o|--onto)
+      ONTO="$2"
+      shift
+      shift
+      ;;
+    --exec-after)
+      EXEC_AFTER="$2"
+      shift
+      shift
+      ;;
+    -*|--*)
+      >&2 echo "unknown option $1"
+      exit 1
+      ;;
+    *)
+      COMMITS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "${BRANCH}" ]]; then
+  >&2 echo "--branch is required"
+  exit 1
+fi
+
+worktree="$(mktemp -d)"
+if [[ "${FORCE_BRANCH}" -eq 1 ]]; then
+  branch_flag="-B"
+else
+  branch_flag="-b"
+fi
+
+git worktree add "${branch_flag}" "${BRANCH}" --no-checkout "${worktree}" "${ONTO}"
+pushd "${worktree}"
+
+git sparse-checkout init --no-cone
+git checkout
+
+if [[ "${#COMMITS[@]}" -eq 0 ]]; then
+  if [ -t 0 ]; then
+    >&2 echo "reading commits from stdin"
+  fi
+
+  while IFS= read -r commit; do
+    git cherry-pick "${commit}"
+  done
+else
+  git cherry-pick "${COMMITS[@]}"
+fi
+
+if [[ -n "${EXEC_AFTER}" ]]; then
+  sh -c "${EXEC_AFTER}"
+fi
+
+popd
+git worktree remove "${worktree}"
